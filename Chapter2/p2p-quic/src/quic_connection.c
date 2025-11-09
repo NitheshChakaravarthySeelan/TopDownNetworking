@@ -1,4 +1,4 @@
-#include "quic_eonnection.h"
+#include "quic_connection.h"
 #include "log.h"
 #include <msquic.h>
 #include <stdio.h>
@@ -156,20 +156,38 @@ QUIC_STATUS QUIC_API ServerConnectionCallback(HQUIC Connection, void* Context, Q
         case QUIC_CONNECTION_EVENT_STREAMS_AVAILABLE:
             // This event is not used in this implementation.
             break;
+	case QUIC_STREAM_EVENT_SEND_COMPLETE:
+		free(Event->SEND_COMPLETE.ClientContext);
+		log_info("Send Complete.");
+		break;
         default:
             break;
     }
     return QUIC_STATUS_SUCCESS;
 }
 
-// TODO: Implement the remaining functions
 void quic_listener_close(quic_listener_t *listener) {
     if (listener) MsQuic->ListenerClose((HQUIC)listener);
 }
 
 quic_conn_t* quic_connect(const char *address, int port) {
-    log_error("quic_connect is not yet implemented.");
-    return NULL;
+	QUIC_STATUS status;
+	HQUIC Connection = NULL;
+
+	if (QUIC_FAILED(status = MsQuic->ConnectionOpen(Registration, ServerConnectionCallback, NULL, &Connection)) {
+		log_error("quic_connection is not established");
+		return NULL;
+	}
+	
+	// Start the Handshake
+	status = MsQuic->ConnectionStart(Connection, Configuration, QUIC_ADDRESS_FAMILY_UNSPEC, address, (uint16_t)port);
+
+	if (QUIC_FAILED(status)) {
+		log_error("quic_connection is not starting");
+		MsQuic->ConnectionClose();
+		return NULL;
+	}
+	return (quic_conn_t*)Connection;
 }
 
 void quic_conn_close(quic_conn_t *conn) {
@@ -177,6 +195,24 @@ void quic_conn_close(quic_conn_t *conn) {
 }
 
 int quic_stream_send(void *stream, const uint8_t *data, uint32_t len, int fin) {
-    log_error("quic_stream_send is not yet implemented.");
-    return -1;
+	QUIC_STATUS status;
+
+	// Allocate a new buffer on the heap
+	memcpy(send_buffer, data, len);
+
+	// Prepare the QUIC_BUFFER struct
+	QUIC_BUFFER buffer;
+	buffer.Buffer = data;
+	buffer.length = len;
+
+	status = MsQuic->StreamSend((HQUIC)stream, &buffer, 1, (QUIC_SEND_FLAGS)fin, data);
+
+	if (QUIC_FAILED(status)) {
+		log_error("StreamSend failed, 0x%x", status);
+		free(send_buffer);
+		return -1;
+	}
+
+	return 0;
 }
+
