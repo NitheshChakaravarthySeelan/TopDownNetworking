@@ -2,6 +2,7 @@
 #define QUIC_CONNECTION_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 // Opaque QUIC connection handle.
 typedef struct quic_conn_t quic_conn_t;
@@ -40,6 +41,9 @@ quic_conn_t* quic_connect(const char *address, int port);
 
 // Closes a QUIC connection.
 void quic_conn_close(quic_conn_t *conn);
+
+// Gets the remote address of a QUIC connection.
+void quic_conn_get_remote_address(quic_conn_t* conn, char* ip_buffer, size_t buffer_size, uint16_t* port);
 
 // Sends data on a QUIC stream.
 int quic_stream_send(void *stream, const uint8_t *data, uint32_t len, int fin);

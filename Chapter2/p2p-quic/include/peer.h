@@ -2,7 +2,7 @@
 #define PEER_H
 
 #include <stdint.h>
-#include "quic_eonnection.h"
+#include "quic_connection.h"
 
 typedef enum {
     PEER_STATE_DISCONNECTED,

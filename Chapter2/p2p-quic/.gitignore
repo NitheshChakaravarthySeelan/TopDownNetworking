@@ -1,0 +1,14 @@
+# Git ignore file for p2p-quic project
+
+# Ignore msquic dependency source code and build artifacts
+deps/msquic/
+
+# Ignore build directories
+obj/
+bin/
+
+# Ignore log files
+*.log
+
+# Ignore certificate files (if they are generated locally and not part of the repo)
+assets/certs/*.pem

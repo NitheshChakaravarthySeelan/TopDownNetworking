@@ -1,32 +1,37 @@
-#include "include/log.h"
+#include "log.h"
+#include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
 
-/**
- * struct tm fields:
+// A simple log implementation
+void log_message(log_level level, const char *format, ...) {
+    // For this project, we'll keep logging simple and print everything to stdout.
+    // A more advanced logger might write to files, handle log levels differently, etc.
+    
+    time_t raw_time;
+    struct tm time_info;
+    char time_str[20];
 
-Field	Meaning	Range
-tm_sec	seconds	0–60
-tm_min	minutes	0–59
-tm_hour	hours	0–23
-tm_mday	day of month	1–31
-tm_mon	month since January	0–11
-tm_year	years since 1900	e.g., 125 → 2025
-tm_wday	days since Sunday	0–6
-tm_yday	days since Jan 1	0–365
-tm_isdst	daylight saving flag	-1, 0, or 1
-*/
-int log_message(const char *msg) {
-	time_t raw_time;
-	struct tm *time_info;
-	char time_str[20];
+    time(&raw_time);
+    localtime_r(&raw_time, &time_info);
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &time_info);
 
-	time(&raw_time); // Passing in a Null value
-	localtime_r(&raw_time, &time_info);
+    const char* level_str;
+    switch (level) {
+        case LOG_LEVEL_DEBUG: level_str = "DEBUG"; break;
+        case LOG_LEVEL_INFO:  level_str = "INFO";  break;
+        case LOG_LEVEL_WARN:  level_str = "WARN";  break;
+        case LOG_LEVEL_ERROR: level_str = "ERROR"; break;
+        default:              level_str = "LOG";   break;
+    }
 
-	// Format time
-    	strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &time_info);
+    printf("[%s] [%s] ", time_str, level_str);
 
-    	// Print with timestamp
-    	printf("[%s] %s\n", time_str, msg);
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
 
-    	return 0;
+    printf("\n");
+    fflush(stdout); // Ensure the log message is printed immediately
 }
